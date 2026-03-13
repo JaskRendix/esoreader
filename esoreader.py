@@ -6,7 +6,12 @@
 # Technology in Architecture, ETH Zuerich. See http://suat.arch.ethz.ch for
 # more information.
 
-import pandas as pd
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 r"""
 esoreader.py
@@ -120,6 +125,7 @@ class EsoFile:
         index: list | None = None,
         use_key_for_columns: bool = True,
     ) -> pd.DataFrame:
+        import pandas as pd
         """
         creates a pandas DataFrame objects with a column for every variable
         that matches the search pattern and key. An None key matches all keys.
@@ -142,6 +148,7 @@ class EsoFile:
         """
         Returns a pandas Series for the first variable matching the search.
         """
+        import pandas as pd
         variables = self.find_variable(search, key=key, frequency=frequency)
         if not variables:
             raise ValueError(f"No variable found for search: {search}")
@@ -164,30 +171,38 @@ class EsoFile:
         return variable, None
 
     def _read_data_dictionary(self) -> DataDictionary:
-        """parses the head of the eso_file, returning the data dictionary.
-        the file object eso_file is advanced to the position needed by
-        read_data.
+        """Parses the head of the eso_file and returns the data dictionary.
+        The file object eso_file is advanced to the position needed by read_data.
         """
         version, timestamp = [
             s.strip() for s in self.eso_file.readline().split(",")[-2:]
         ]
         dd = DataDictionary(version, timestamp)
+
         line = self.eso_file.readline().strip()
         while line != "End of Data Dictionary":
             line, freq = self._read_reporting_frequency(line)
+
             if freq:
                 fields = [f.strip() for f in line.split(",")]
+
                 try:
                     if len(fields) >= 4:
                         var_id, _, key, name = fields[:4]
                     else:
                         var_id, _, name = fields[:3]
                         key = None
+
                     name, unit = self._read_variable_unit(name)
                     dd.variables[int(var_id)] = [freq, key, name, unit]
-                except ValueError:
-                    pass  # skip malformed lines
+
+                except Exception as e:
+                    raise ValueError(
+                        f"Malformed data dictionary line: {line!r}"
+                    ) from e
+
             line = self.eso_file.readline().strip()
+
         dd.ids = set(dd.variables.keys())
         return dd
 

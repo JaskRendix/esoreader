@@ -23,7 +23,9 @@ The `esoreader` module makes it very easy to explore the output of EnergyPlus, s
 
 # Installation
 
-The easiest way to install `esoreader` ist to do:
+esoreader requires **Python 3.10+**.
+
+Install with:
 
 ```
 $ pip install esoreader
